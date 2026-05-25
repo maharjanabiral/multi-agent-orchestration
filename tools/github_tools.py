@@ -1,14 +1,19 @@
-from github import Auth, Github, GithubIntegration
+from github import Auth, Github, GithubIntegration, UnknownObjectException, GithubException
 import json
 from dotenv import load_dotenv
+from typing import List
 import os
 
+load_dotenv()
 AUTH_TOKEN = os.getenv("AUTH_TOKEN")
 
 auth = Auth.Token(AUTH_TOKEN)
 g = Github(auth=auth)
 
-repo = g.get_repo(f"{g.get_user().login}/unconditional-mnist-gan")
+try:
+    repo = g.get_repo(f"{g.get_user().login}/unconditional-mnist-gan")
+except UnknownObjectException:
+    print("Repository not found")
 
 def get_repo_tree():
     
@@ -58,9 +63,44 @@ def create_branch(issue_number: int):
     issue = get_issue(issue_number)
     branch_name = f"fix-issue-{issue['number']}-{issue['title'][:30].lower().replace(' ', '-')}"
     source_branch = repo.get_branch("main")
-    repo.create_git_ref(ref=f"refs/heads/{branch_name}", sha=source_branch.commit.sha)
+
+    try:
+        repo.create_git_ref(ref=f"refs/heads/{branch_name}", sha=source_branch.commit.sha)
+    except GithubException as e:
+        print(f"An error occured: {e}")
+    return branch_name
+    
+def commit_files(branch_name: str, changes: List[str]):
+    
+    for change in changes:
+        path = change['path']
+        content = change['content']
+        message = f"agent: update {path}"
+
+        try:
+            existing = repo.get_contents(path, ref=branch_name)
+            repo.update_file(
+                path=path,
+                message=message,
+                content=content,
+                sha=existing.sha,
+                branch=branch_name
+            )
+        except:
+            repo.create_file(
+                path=path,
+                message=message,
+                content=content,
+                branch=branch_name
+            )
+    return True 
     
 
 
+
 if __name__ == "__main__":
-    create_branch()
+    branch_name = create_branch(issue_number=1)
+    changes = [
+        {"path": "test_agent.py", "content": "print('hello from agent')"}
+    ]
+    commit_files(branch_name, changes)
