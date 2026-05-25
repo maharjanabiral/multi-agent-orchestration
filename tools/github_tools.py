@@ -96,7 +96,24 @@ def commit_files(branch_name: str, changes: List[str]):
     return True 
     
 
-
+def open_pull_request(issue_number: int, branch_name: str):
+    """Open a pull request only if branch has changes"""
+    
+    comparison = repo.compare("main", branch_name)
+    
+    if comparison.ahead_by == 0:
+        print("No changes in branch, skipping PR")
+        return None
+    
+    issue = get_issue(issue_number)
+    pr = repo.create_pull(
+        title=f"Fix issue #{issue['number']} - {issue['title']}",
+        body=f"Closes #{issue['number']}\n\n{issue['body']}",
+        head=branch_name,
+        base="main"
+    )
+    
+    return pr.html_url
 
 if __name__ == "__main__":
     branch_name = create_branch(issue_number=1)
