@@ -9,6 +9,7 @@ dependencies = [
     "langchain-community>=0.4.2",
     "langchain-groq>=1.1.2",
     "langgraph>=1.2.1",
+    "nbformat>=5.10.4",
     "pygithub>=2.9.1",
     "python-dotenv>=1.2.2",
 ]
