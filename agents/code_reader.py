@@ -41,12 +41,10 @@ def code_reader_node(state: GraphState) -> GraphState:
 
     relevant_files = json.loads(result.content)["relevant_files"]
 
-    # Step 2 — read the relevant files
     file_contents = {}
     for path in relevant_files:
         file_contents[path] = get_file_contents(path)
 
-    # Step 3 — summarize what was found
     summary_prompt = ChatPromptTemplate.from_messages([
         ("system", """You are a code reader agent. Summarize the relevant code for the given issue.
          Respond ONLY in JSON with this structure, no markdown fences:
